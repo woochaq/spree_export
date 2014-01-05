@@ -8,6 +8,6 @@ Spree::Admin::OrdersController.class_eval do
     else
       @orders = Spree::Order.order("created_at")
     end
-    send_data @orders.export_csv, filename: "orders.csv"
+    send_data @orders.export_csv({col_sep: '|'}), filename: "orders_#{Date.today}.csv"
   end
 end
