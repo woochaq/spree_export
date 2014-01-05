@@ -12,27 +12,39 @@ Spree::Order.instance_eval do
 
   def self.export_csv(options = {})
     CSV.generate(options) do |csv|
-      address_column_names = ["address1", "firstname", "lastname", "zipcode", "city", "phone"]
-      order_column_names = ["number", "email", "created_at", "total"]
-      products_column_names = ["products", "product count"]
-      billing_column_names = ["address1", "firstname", "lastname", "zipcode", "city", "phone"]
-      column_headers = order_column_names + products_column_names + address_column_names + billing_column_names
       csv << column_headers
       all.each do |order|
-        values = order.attributes.values_at(*order_column_names) + products(order) + products_quantity(order) +
-          ship_address_values(order, address_column_names) + bill_values(order, billing_column_names)
+        values = [order.number] + ship_address_values(order, address_column_names.values) + [order.email] +
+          bill_values(order, billing_column_names.values) + [order.total] + [order.created_at] + products(order)
         csv << values
       end
     end
   end
 
   private
-    def products(order)
-      [order.products.map{ |p| p.name }.join(',')]
+    def column_headers
+      ["number"] + address_column_names.keys + ["email"] + billing_column_names.keys +
+        ["order_amount_total"] + ["created_at"] + products_column_names
     end
 
-    def products_quantity(order)
-      [order.line_items.map{ |p| p.quantity }.join(',')]
+    def address_column_names
+      { "shipping_firstname" => "firstname", "shipping_lastname" => "lastname",
+       "shipping_address" => "address1", "shipping_zipcode" => "zipcode",
+       "shipping_city" => "city", "shipping_phone" => "phone"}
+    end
+
+    def billing_column_names
+      {"billing_firstname" => "firstname", "billing_lastname" => "lastname",
+       "billing_address" => "address1", "billing_zipcode" => "zipcode",
+       "billing_city" => "city", "billing_phone" => "phone"}
+    end
+
+    def products_column_names
+      Array.new(6) {|p| c = p+1; ["product_#{c}","product#{c}_quantity", "product#{c}_costprice", "product#{c}_masterprice"]}.flatten
+    end
+
+    def products(order)
+      order.line_items.map{|i| [i.product.name, i.quantity, i.cost_price.to_s, i.price.to_s]}.flatten
     end
 
     def ship_address_values(order, address_column_names)
