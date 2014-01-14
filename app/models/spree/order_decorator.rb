@@ -44,7 +44,11 @@ Spree::Order.instance_eval do
     end
 
     def products(order)
-      order.line_items.map{|i| [i.product.name, i.quantity, i.cost_price.to_s, i.price.to_s]}.flatten
+      order.line_items.map{|i| [product_name(i), i.quantity, i.cost_price.to_s, i.price.to_s]}.flatten
+    end
+
+    def product_name(variant)
+      variant.product.present? ? variant.product.name : "not exists"
     end
 
     def ship_address_values(order, address_column_names)
