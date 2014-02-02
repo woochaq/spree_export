@@ -15,7 +15,8 @@ Spree::Order.instance_eval do
       csv << column_headers
       all.each do |order|
         values = [order.number] + ship_address_values(order, address_column_names.values) + [order.email] +
-          bill_values(order, billing_column_names.values) + [order.total] + [order.created_at] + products(order)
+          bill_values(order, billing_column_names.values) + [order.total] + [order.created_at] +
+          order.attributes.values_at(*['state', 'payment_state', 'shipment_state']) + products(order)
         csv << values
       end
     end
@@ -24,7 +25,8 @@ Spree::Order.instance_eval do
   private
     def column_headers
       ["number"] + address_column_names.keys + ["email"] + billing_column_names.keys +
-        ["order_amount_total"] + ["created_at"] + products_column_names
+        ["order_amount_total"] + ["created_at"] + ["order_state"] +
+        ["payment_state"] + ["shipment_state"] + products_column_names
     end
 
     def address_column_names
